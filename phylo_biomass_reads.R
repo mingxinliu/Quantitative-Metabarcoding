@@ -275,7 +275,7 @@ b.CO1 <- brm(Prop_reads ~ Prop_biomass + (1|gr(Species, cov=C.CO1)),
 
 # An estimate of phylogenetic signal 
 # (the proportion of variation in a trait attributed to phylogenetic effects)
-b.1 %>% as_tibble() %>% 
+b.CO1 %>% as_tibble() %>% 
   dplyr::select(sigma_b = sd_Species__Intercept, sigma_e = sigma) %>% 
   mutate(h2 = sigma_b^2/(sigma_b^2 + sigma_e^2)) %>% 
   pull(h2) %>% quantile(probs=c(0.025,0.5,0.975))
