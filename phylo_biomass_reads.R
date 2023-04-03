@@ -33,6 +33,10 @@ biomass_reads_16S <- biomass_reads_16S %>% mutate(Prop_reads = Reads/Sample_tota
 biomass_reads_16S <- biomass_reads_16S %>% mutate(Prop_biomass = biomass_weight/Sample_total_biomass)
 
 ##### plot 16S linear regression
+# run with siteID as random effect
+lm_model_16S_ran <- lmer(Prop_reads ~ Prop_biomass + (Prop_biomass|SampleID), data = biomass_reads_16S)
+summary(lm_model_16S_ran)
+
 lm_model_16S <- lm(Prop_reads ~ Prop_biomass, data = biomass_reads_16S)
 summary(lm_model_16S)
 
@@ -100,6 +104,9 @@ p_CO1_lm <- ggplot(biomass_reads_CO1, aes(x=Prop_biomass, y=Prop_reads)) + theme
 p_CO1_lm
 
 ##### a few linear models
+lm_CO1_model_ran <- lm(Prop_reads ~ Prop_biomass + (1|SampleID), data = biomass_reads_CO1)
+summary(lm_CO1_model_ran)
+
 lm_CO1_model1 <- lm(Prop_reads ~ Prop_biomass, data = biomass_reads_CO1)
 summary(lm_CO1_model1)
 
@@ -247,39 +254,6 @@ anc_mismatch_CO1 <- setMap(anc_mismatch_CO1, cols2)
 plot(anc_mismatch_CO1)
 
 ################# QUESTION 2: Is there any phylogenetic preference in the deviation of sequence abundance estimation?
-##### brms modelling #####
-# 16S dataset
-C.16S <- ape::vcv.phylo(tree_16S, corr = T)
-p.b.16S <- set_prior("student_t(3, 0, 2.5)", class = "b", lb = c(0,0,NA))
-
-b.16S <- brm(Prop_reads ~ Prop_biomass + (1|gr(Species, cov=C.16S)),
-             data=biomass_reads_16S, family=gaussian(),
-             data2=list(C.16S=C.16S), cores=2,
-             chains=2, iter=5000000, thin = 5)
-
-# An estimate of phylogenetic signal 
-# (the proportion of variation in a trait attributed to phylogenetic effects)
-b.16S %>% as_tibble() %>% dplyr::select(sigma_b = sd_Species__Intercept, sigma_e = sigma) %>% 
-  mutate(h2 = sigma_b^2/(sigma_b^2 + sigma_e^2)) %>% 
-  pull(h2) %>% quantile(probs=c(0.025,0.5,0.975))
-
-# CO1 dataset
-C.CO1 = ape::vcv.phylo(tree_CO1, corr = T)
-
-p.b.CO1 <- set_prior("student_t(3, 0, 2.5)", class = "b", lb = c(0,0,NA))
-
-b.CO1 <- brm(Prop_reads ~ Prop_biomass + (1|gr(Species, cov=C.CO1)),
-           data=biomass_reads_CO1, family = gaussian(),
-           data2 = list(C.CO1=C.CO1),cores=2,
-           chains=2, iter=5000000, thin = 5)
-
-# An estimate of phylogenetic signal 
-# (the proportion of variation in a trait attributed to phylogenetic effects)
-b.CO1 %>% as_tibble() %>% 
-  dplyr::select(sigma_b = sd_Species__Intercept, sigma_e = sigma) %>% 
-  mutate(h2 = sigma_b^2/(sigma_b^2 + sigma_e^2)) %>% 
-  pull(h2) %>% quantile(probs=c(0.025,0.5,0.975))
-
 ####### PGLS models
 ##### create caper object for 16S data
 comp.dat.16S <- comparative.data(tree_16S, biomass_reads_16S, names.col = "Species", na.omit = FALSE, warn.dropped = TRUE)
