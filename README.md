@@ -1,1 +1,1 @@
-Phylogenetic signal modelling of HTS read abundance and speices biomass
+Phylogenetic signal modelling of HTS read abundance and species biomass
